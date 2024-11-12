@@ -1,0 +1,44 @@
+--muestra el registro aunque este bloqueado, pero puede que alguien este
+--haciendo pruebas y ese no sea el resultado correcto
+select unitprice from Products(nolock) where ProductID = 2
+
+--solo muestra hasta la 4 porque la transaccion utiliza el ProductID 1,2,3 
+--y se lo salta por el readpast
+select * from Products(readpast) where ProductID in (1,2,3,4)
+
+
+--Con el Holdlock bloquea todo sobre modificar datos, como el update, insert, delete,
+--pero si puede consultar con el (select)
+
+--Aqui se queda pensando
+update Categories set CategoryName = 'Desarr' where CategoryID = 3
+--aqui si funciona bien
+select * from Categories where CategoryID = 3
+
+--no se puede modificar ningun dato aunque en la transaccion se utilizo un where,
+--con el tablockx se bloquea toda la tabla completa
+delete Categories where CategoryID = 6
+
+--Nolock
+begin tran 
+	update Products set
+	UnitPrice = 400
+	where ProductID = 1
+
+rollback tran
+--Readpast
+begin tran
+	update Products set UnitPrice = 999 where ProductID <= 3
+rollback tran
+
+--Holdlock
+begin tran 
+	select * from Categories(holdlock) where CategoryID <= 3
+rollback tran
+
+
+	--tablockx
+begin tran
+	select * from Categories(tablockx)
+	where CategoryID = 1
+commit tran
