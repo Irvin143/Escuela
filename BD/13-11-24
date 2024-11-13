@@ -1,0 +1,65 @@
+--Nos devuleve informacion sobre ususarios, seciones y
+--procesos en una instancia del motor de base de datos 
+--SQL server que estan corriendo en el momento de su ejecucion
+sp_who['usuario']
+
+--Con el comando KILL se utiliza por si un objeto esta bloqueado 
+--y se desea eliminar dicho proceso
+
+--Por si a alguien se le olvido cerrar una transaccion
+KILL NumProceso
+
+--No puedo ver por el bloqueo
+select * from Products
+
+--Veo todas las transacciones
+sp_who
+
+--elimino la transaccion que no se cerro
+KILL 73
+
+--Creamos dos tablas
+create table cheques(
+cta int, nombre char(30), 
+balance numeric(12,2))
+
+create table ahorros(
+cta int, nombre char(30),
+balance decimal(10,2))
+
+insert cheques values(1,'jose',200)
+insert ahorros values(1,'jose',200)
+insert cheques values(2,'ana',200)
+insert ahorros values(2,'ana',200)
+
+--Interbloqueos
+
+begin tran t2
+
+update cheques set
+balance = balance +200
+where cta = 2
+
+update ahorros
+set balance = balance -200
+where cta = 2
+
+--Aqui empieza el problema, aqui empieza el interbloqueo
+
+commit tran t2
+begin tran 
+	update products set
+	UnitPrice = 400
+	where ProductID = 1
+commit tran
+
+begin tran t1
+begin tran t1 update ahorros
+set balance = balance -200
+where cta = 1
+
+update cheques
+set balance = balance +200
+where cta = 1
+
+commit tran t1
