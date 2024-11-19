@@ -1,0 +1,18 @@
+--Para crear un  usuario
+
+CREATE LOGIN login_name with
+	password = 'password¨'[hashed][must_change],
+	--must_change es para que cuando entre por primera ves pueda cambiar la contraseña para que noams esa persona sepa
+	DEFAULT_DATABASE = database|
+	DEFAULT_LANGUAGE = English|--El lenguaje que tendra el servidor, ya que si es ingles o español cambia muchas cosas como la hora
+	CHECK_EXPIRATION = {ON/OFF}|
+	CHECK_POLITY = {ON/OFF}
+
+
+/*
+Alter login login_name enable|dinable, para desabilitar el user
+
+Elinacion de usuario 
+USE nombreDB
+DROP user_name
+*/
