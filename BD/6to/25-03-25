@@ -1,0 +1,54 @@
+create proc so_calificaciones
+@cal1 int, @cal2 int, @cal3 int,@cal4 int,
+@prom decimal(12,2) output, @tipo char(20) output as
+
+select @prom = (@cal1+@cal2+@cal3+@cal4)/4
+
+if @prom >= 70
+	select @tipo = 'Aprobado'
+else
+	select @tipo = 'Reprobado'
+go
+
+declare @a numeric (12,2), @b char(20)
+select @a,@b
+exec so_calificaciones 70,80,90,100,@a output,@b output
+select @a,@b
+
+go
+
+create proc sp_edad @fecha datetime, @edad int output as
+
+select @edad = datediff(yy,@fecha,getdate())
+
+select @fecha = dateadd(yy,@edad,@fecha)
+
+if @fecha > getdate()
+	select @edad = @edad - 1
+go
+declare @a int
+exec sp_edad '12-01-2000', @a output
+select @a
+go
+create proc sp_edad_todos as
+declare @emp int , @edadExacta int, @fecha datetime
+create table #aux(emp int, edadExacta int)
+
+select @emp = min(Employeeid) from Employees
+
+while @emp is not null 
+begin
+	select @fecha = BirthDate from Employees where EmployeeID = @emp
+	exec sp_edad @fecha,@edadExacta output
+
+	insert into #aux values (@emp, @edadExacta)
+
+	select @emp = min(Employeeid) from Employees
+	where EmployeeID > @emp
+end
+select nombre = e.FirstName + ' '+ e.LastName, e.BirthDate, edadExacta = a.edadExacta
+from #aux a
+inner join Employees e on e.EmployeeID = a.emp
+go
+
+exec sp_edad_todos
