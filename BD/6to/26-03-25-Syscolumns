@@ -1,0 +1,64 @@
+create proc sp_ClaveEmpleado 
+@emp int, @nivel int output, @jefeSup int output  as
+
+select @nivel = 0
+
+declare @jefe int, @aux int
+
+select @jefe = reportsTo from Employees
+where EmployeeID = @emp
+
+while @jefe is not null
+begin
+	select @nivel = @nivel + 1
+	select @aux = @jefe
+
+	select @jefe = reportsTo from Employees
+	where EmployeeID = @jefe
+end
+
+select @jefeSup = @aux
+
+go
+drop proc sp_ClaveEmpleado
+declare @a int = 6,@b int = 5, @c int = 5
+exec sp_claveEmpleado @a,@b output,@c output
+select @a,@b,@c
+
+select EmployeeID, ReportsTo from Employees
+
+select * from sysObjects
+select * from sysObjects
+where xtype = 'v'
+
+--Tabla sysColumns
+/*}
+Contiene el nombre de columnas de tablas y vistas, tambien el nombre 
+de los parametros de los procedimientos almacenados
+*/
+
+select id, colid,colorder,name,xtype,length,prec,scale,isnullable
+from syscolumns where object_id('Products') = id
+go
+
+
+create proc sp_columnas @tabla varchar(100) as
+declare @texto varchar(2000), @alias varchar(2), @min int, @columna varchar(50)
+
+select @alias = substring(@tabla,1,1)
+select @texto = 'select '
+
+select @min = min(colid) from syscolumns where id = object_id(@tabla)
+while @min is not null
+begin
+	select @columna = name from syscolumns where id = object_id(@tabla) and @min = colid
+	select @texto = @texto + @alias +','+ @columna +','
+
+	select @min = min(colid) from syscolumns where id = object_id(@tabla) and @min > colid
+end
+select @texto = substring(@texto,1,len(@texto) - 1)
+select @texto = @texto + ' from '+@tabla +''+@alias
+select @texto
+go
+
+exec sp_columnas 'customers'
