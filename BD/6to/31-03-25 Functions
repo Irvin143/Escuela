@@ -1,0 +1,27 @@
+create function dbo.Ordenes(@emp int)
+returns table
+as
+return(select * from Orders where EmployeeID = @emp)
+go
+
+select * from dbo.Ordenes(1)
+go
+--Ejemplo 1 
+/*
+Funcion de tabla en linea que reciba el año y regrese el nombre del cliente y el
+total de ordenes de ese año, debe mostrar todos los clientes aunque no
+hayan realizado ordenes
+*/
+create function dbo.OrdenesAño(@año int)
+returns table
+as
+return(
+select c.companyName, 'Total' = count(OrderID)
+from orders o
+right outer join customers c on c.CustomerID = o.CustomerID
+and year(o.OrderDate) = @año
+group by CompanyName
+)
+select * from dbo.OrdenesAño(1996)
+select * from dbo.OrdenesAño(1997)
+select * from dbo.OrdenesAño(1998)
