@@ -1,0 +1,92 @@
+alter function dbo.fn_empleadosProductos()
+returns @resp table(nombreEmp varchar(100),productos varchar(4000))
+as
+begin
+	declare @emp int, @nomProd varchar(4000), @nombreEmp varchar(4000)
+	declare @prod table (nomProd varchar(100))
+
+	select @emp = min(employeeid) from Employees
+
+	while @emp is not null
+	begin
+		select @nombreEmp = firstName +' '+lastName from Employees
+		where EmployeeID = @emp
+		
+		delete @prod
+
+		insert @prod
+		select p.ProductName
+		from [Order Details] d
+		inner join orders o on o.orderid = d.OrderID
+		inner join products p on p .ProductID = d.ProductID
+		where o.EmployeeID = @emp
+		group by p.productName
+		order by 1
+
+
+		select @nomProd = ''
+		select @nomProd = @nomProd +', '+ nomProd from @prod
+
+		insert @resp values (@nombreEmp , @nomProd)
+		select @emp = min(employeeid) from Employees
+		where EmployeeID > @emp
+	end
+	return
+end
+go
+select * from dbo.fn_empleadosProductos()
+
+create function dbo.fn_ImporteMeses(@año int)
+returns @resp table (calve int, nombreMes varchar(29),total numeric(12,2))
+as
+begin
+	declare @m table (clave int, nombre varchar(59))
+	insert @m values(1,'Ene')
+	insert @m values(2,'Feb')
+	insert @m values(3,'Mar')
+	insert @m values(4,'Abr')
+	insert @m values(5,'May')
+	insert @m values(6,'Jun')
+	insert @m values(7,'Jul')
+	insert @m values(8,'Ago')
+	insert @m values(9,'Sep')
+	insert @m values(10,'Oct')
+	insert @m values(11,'Nov')
+	insert @m values(12,'Dic')
+
+	insert @resp
+	select m.clave,m.nombre, isnull(sum(d.Quantity * d.UnitPrice),0)
+	from [Order Details] d 
+	right outer join orders o on o.orderid = d.orderid
+	right outer join @m m on m.clave = datepart(mm,o.orderdate) and year(o.orderdate) = @año
+	group by m.clave , m.nombre
+	order by 1
+
+	return 
+end
+go
+select * from dbo.fn_ImporteMeses(1997)
+
+alter function dbo.fn_diasT(@año int)
+returns @resp table(clave int, nombreDia varchar(20), TotalOrdenes int)
+as
+begin
+	declare @semana table(clave int, nombreDia varchar(20))
+	insert @semana values(1,'sunday')
+	insert @semana values(2,'Monday')
+	insert @semana values(3,'Tuesday')
+	insert @semana values(4,'Wednesday')
+	insert @semana values(5,'Thursday')
+	insert @semana values(6,'Friday')
+	insert @semana values(7,'Saturday')
+
+	insert @resp
+	select s.clave, s.nombreDia, count(o.OrderID)
+	from orders o
+	right outer join @semana s on s.clave = datepart(dw,o.OrderDate) and year(o.OrderDate) = @año
+	group by s.clave, s.nombreDia
+	order by s.clave
+	return 
+end
+
+select * from dbo.fn_diasT(1997)
