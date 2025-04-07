@@ -1,0 +1,55 @@
+create trigger tr_materiales_up
+on materiales for update as
+declare @precioViejo numeric(12,2),@precioNuevo numeric(12,2)
+
+select @precioNuevo = precio from inserted
+select @precioViejo = precio from deleted
+
+if @precioNuevo < @precioViejo
+begin
+	rollback tran
+	raiserror('Errir al actualizar el precio, precio nuevo es menor',16,1)
+end
+go 
+--Evita actualizaciones masivas
+create trigger tr_materiales_upd
+on materiales for update as
+	declare @conta int
+
+	select @conta = count(*) from inserted
+
+	if @conta > 1
+	begin
+		rollback
+		tran
+		raiserror('',16,1)
+	end
+go
+--Nos dice que triggers tiene la tabla materiales, si es de eliminacion, actaulizacion o insert
+sp_helptrigger materiales
+
+--Procedimiento para crear un trigger a cada tabla de la bd
+create or alter proc sp_crea_trigger_delete2 as
+declare @min int, @nom varchar(50),@t varhcar(max)
+
+select @min = min(id) from sysobjects
+where xtype = 'u' and name not like 'sys%'
+
+while @min is not null
+begin
+	select @nom = name from sysobjects
+	where id = @min
+
+	select @t ='create trigger tr_'+replace(@nom,' ','')+'_delete'+char(13)
+	select @t =@t+' on ['+@nom+'] for delete as'+char(13)
+	select @t =@t+' rollback tran'+char(13)
+	select @t =@t+' raiserror('+char(39)+'por el momento no se puede eliminar registros'+char(39)+',16,1)'+char(13)
+
+	select @t
+
+	select @min = min (id) from sysobjects
+	where xtype = 'u' and name not like 'sys%' and id > @min
+	end
+go
+ b b
+exec sp_crea_trigger_delete2
